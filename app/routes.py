@@ -52,7 +52,7 @@ def signup():
     
 
     query = 'INSERT INTO user (fname, lname, username, password, groupnames) values (%s, %s, %s, %s, %s)'
-    data = (request.form['firstname'],request.form['lastname'], request.form['username'], request.form['password'], "Group 1")
+    data = (request.form['firstname'],request.form['lastname'], request.form['username'], request.form['password'], request.form['groupnames'])
     
     try:
         db_cursor.execute(query, data)
@@ -60,7 +60,7 @@ def signup():
     except mysql.connector.Error as error:
         print("Failed to insert into MySQL table {}".format(error))
 
-    return redirect('/home')
+    return redirect('/user/login')
 
 
 @app.route('/user/login', methods=['GET', 'POST'])
@@ -71,7 +71,7 @@ def login():
     mandatory_fields = ["username", "password"]
     if not all(field in request.form for field in mandatory_fields):
         app.logger.error(f'path: /login, mandatory field(s) missing. data received in request: {request.form}')
-        return redirect('/index')
+        return redirect('/home')
     app.logger.debug(f'path: /user/login, data received in request: {request.form}')
 
     db_connection = get_db_connection()
@@ -85,9 +85,16 @@ def login():
         print("Failed to insert into MySQL table {}".format(error))
 
     if not record:
+        app.logger.debug("path: /user/login, invalid Username or password")
         flash('Invalid Username or password')
+        return redirect('/user/login')
     else:
-        flash('You were successfully logged in') 
+        app.logger.debug(f'path: /user/login, user fetched from db: {record}')
+        # flash('You were successfully logged in') 
+
+    if record[0] != request.form["password"]:
+        flash('Invalid Username or password')
+        return redirect('/user/login')
 
     return redirect('/home')
 
