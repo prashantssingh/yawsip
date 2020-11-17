@@ -1,6 +1,7 @@
 from flask import request, render_template, flash, redirect, make_response, g, session
 from app import app
 import logging
+import os
 
 from werkzeug.utils import secure_filename
 
@@ -17,7 +18,7 @@ USERNAME='pxs3374_app_user'
 # PASSWORD='prash94@MySQL'
 PASSWORD='Hello94@World'
 
-app.config['UPLOAD_FOLDER'] = "./upload-folder"
+app.config['UPLOAD_FOLDER'] = upload_folder = "./upload-folder"
 app.secret_key = os.urandom(24)
 
 def get_db_connection():
@@ -108,14 +109,15 @@ def logout():
 
 @app.route('/upload', methods = ['POST'])
 def upload_file():
+    app.logger.debug(f'path: /upload, Files in req dict: {request.files}')
     if "file" not in request.files:
         app.logger.debug('path: /upload, No file key in request.files')
-        return
+        return render_template('dashboard.html')
 
     file = request.files['file']
-    file.save(secure_filename(file.filename))
+    file.save(os.path.join(upload_folder, secure_filename(file.filename)))
     app.logger.debug('path: /upload, file uploaded successfully')
-    return
+    return render_template('dashboard.html')
 
 @app.errorhandler(404)
 def not_found(some):
