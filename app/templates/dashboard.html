@@ -41,20 +41,22 @@
           </form>
         </div>
         <div class="modal-footer">
-          <input type="submit" class="btn btn-primary"  value="Submit" data-dismiss="modal" ></input>
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="close" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary"  value="Submit" data-dismiss="modal" onclick="return uploadFile();" >Upload</button>
         </div>
       </div>
       <div id="output"></div>
     </div>
   </div>
 </div>
- <script type="text/javascript">
-    let file = document.getElementById("image-file").files[0];
-    let formData = new FormData();
+  <script type="text/javascript">
+    function uploadFile() {
+      let file = document.getElementById("image-file").files[0];
+      let formData = new FormData();
 
-    formData.append("file", file);
-    fetch('/upload', {method: "POST", body: formData});
+      formData.append("file", file);
+      fetch('/upload', {method: "POST", body: formData});
+    }
   </script>
 </body>
 </html>
