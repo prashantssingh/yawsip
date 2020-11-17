@@ -1,4 +1,4 @@
-from flask import request, render_template, flash, redirect, make_response, g
+from flask import request, render_template, flash, redirect, make_response, g, session
 from app import app
 import logging
 
@@ -11,10 +11,11 @@ from mysql.connector import errorcode
 import os
 
 # MySQL connection params
-HOSTNAME='localhost'
+HOSTNAME='pxs3374.uta.cloud'
 DATABASE='yawsip'
-USERNAME='root'
-PASSWORD='prash94@MySQL'
+USERNAME='pxs3374_app_user'
+# PASSWORD='prash94@MySQL'
+PASSWORD='Hello94@World'
 
 app.config['UPLOAD_FOLDER'] = "./upload-folder"
 app.secret_key = os.urandom(24)
@@ -90,7 +91,7 @@ def login():
         return redirect('/user/login')
     else:
         app.logger.debug(f'path: /user/login, user fetched from db: {record}')
-        # flash('You were successfully logged in') 
+        session['logged_in'] = True 
 
     if record[0] != request.form["password"]:
         flash('Invalid Username or password')
@@ -99,14 +100,22 @@ def login():
     return redirect('/home')
 
 
+@app.route("/user/logout")
+def logout():
+    session['logged_in'] = False
+    return render_template('login.html') 
+
+
 @app.route('/upload', methods = ['POST'])
 def upload_file():
     if "file" not in request.files:
-        return "No user_file key in request.files"
+        app.logger.debug('path: /upload, No file key in request.files')
+        return
 
     file = request.files['file']
     file.save(secure_filename(file.filename))
-    return 'file uploaded successfully'
+    app.logger.debug('path: /upload, file uploaded successfully')
+    return
 
 @app.errorhandler(404)
 def not_found(some):
