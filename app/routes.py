@@ -124,6 +124,11 @@ def not_found(some):
     """Page not found."""
     return render_template("404.html")
 
+@app.errorhandler(500)
+def internal_server_error(some):
+    """Interval Server Error."""
+    return render_template("500.html")
+
 
 @app.teardown_request
 def teardown_request(exception):
