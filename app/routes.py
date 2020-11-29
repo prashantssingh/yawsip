@@ -51,7 +51,6 @@ def signup():
     
     db_connection = get_db_connection()
     db_cursor = get_db_cursor(db_connection)
-    
 
     query = 'INSERT INTO user (fname, lname, username, password, groupnames) values (%s, %s, %s, %s, %s)'
     data = (request.form['firstname'],request.form['lastname'], request.form['username'], request.form['password'], request.form['groupnames'])
@@ -105,6 +104,11 @@ def login():
 def logout():
     session['logged_in'] = False
     return render_template('login.html') 
+
+@app.route("/admin/acceptuser/<userid>", methods = ['GET'])
+def accept_user(userid):
+    action = request.args["action"]
+    query = 'UPDATE user SET '
 
 
 @app.route('/upload', methods = ['POST'])
