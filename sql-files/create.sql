@@ -1,3 +1,5 @@
+DROP DATABASE IF EXISTS yawsip;
+
 CREATE DATABASE yawsip;
 
 USE yawsip;
