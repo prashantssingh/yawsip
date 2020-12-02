@@ -22,6 +22,10 @@
             <label for="LastName">Last Name</label>
             <input type="text" class="form-control"name="lastname" id="LastName">
           </div>
+          <div class="form-group">
+            <label for="username">Email</label>
+            <input type="email" class="form-control" name="email" id="email">
+          </div>
          <div class="form-group">
           <label for="username">Username</label>
           <input type="text" class="form-control" name="username" id="UserName">
@@ -42,6 +46,7 @@
         data = {}
         var data = document.forms['formElem']['firstname'].value;
         var data = document.forms['formElem']['lastname'].value;
+        var data = document.forms['formElem']['email'].value;
         var data = document.forms['formElem']['username'].value;
         var data = document.forms['formElem']['password'].value;
         var data = document.forms['formElem']['groupnames'].value;
