@@ -23,7 +23,13 @@
 <div class="container">
   <!-- Trigger the modal with a button -->
   <button type="button" class="btn btn-primary btn-md float-element-right" data-toggle="modal" data-target="#uploadModal">Upload</button>
-
+  {% if data %}
+    {% for record in data %}
+      <div>
+        <p>{{ record }}</p><br/>
+      </div>
+    {% endfor %}
+  {% endif %}
   <!-- Modal -->
   <div class="modal fade" id="uploadModal" role="dialog">
     <div class="modal-dialog">
