@@ -63,7 +63,7 @@ CREATE TABLE upload (
     updatedat DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO user VALUES ("Prashant", "Singh", "94.prashantsingh@gmail.com", "prashantsingh", "helloworld", "Admin", "No Group", "Approved");
+INSERT INTO user VALUES ("Prashant", "Singh", "94.prashantsingh@gmail.com", "admin", "admin", "Admin", "No Group", "Approved");
 INSERT INTO user VALUES ("Pranit", "Jaiswal", "pranitj@gmail.com", "pranitj", "helloworld", "User", "Group 1, Group 2", "Pending");
 INSERT INTO user_group VALUES ("pranitj", "Group 1");
 INSERT INTO user_group VALUES ("pranitj", "Group 2");
