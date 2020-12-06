@@ -34,6 +34,9 @@ mail = Mail(app)
 app.config['UPLOAD_FOLDER'] = upload_folder = "./upload-folder"
 app.secret_key = os.urandom(24)
 
+current_user = ""
+data = []
+
 def get_db_connection():
     return mysql.connector.connect(
                 host=HOSTNAME,
@@ -136,29 +139,34 @@ def login():
         return redirect('/user/login')
 
     session['logged_in'] = True
+
+    global current_user
+    current_user = request.form["username"]
     return redirect('/home')
 
 
 @app.route("/admin/getallusers", methods = ['GET'])
 def getallusers():
+    global data
     db_connection = get_db_connection()
     db_cursor = get_db_cursor(db_connection)
     
-    record = []
+    records = []
     try:
-        db_cursor.execute("SELECT fname, lname, groupname from user u, user_group ug WHERE u.username = %s AND ug.username = %s;", (request.form["username"], request.form["username"]))
-        record = db_cursor.fetchone()
+        db_cursor.execute("SELECT fname, lname, groupnames FROM user WHERE status = 'Verified';")
+        records = db_cursor.fetchall()
     except mysql.connector.Error as error:
         print("Failed to insert into MySQL table {}".format(error))
 
-    if not record:
+    if not records:
         app.logger.debug("path: /admin/getallusers, no users left to authenticate")
         flash('No users left to authenticate')
         return render_template('dashboard.html')
-    else:
-        # data = 
-        app.logger.debug(f'path: /admin/getallusers, user fetched from db: {record}')
-        return render_template('dashboard.html', data=record)
+
+    global data
+    data = records
+    app.logger.debug(f'path: /admin/getallusers, user fetched from db: {records}')
+    return redirect('/home')
 
 
 @app.route("/admin/approveuser/<username>", methods = ['GET'])
