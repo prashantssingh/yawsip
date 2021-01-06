@@ -4,15 +4,15 @@ from app import app
 import logging
 import os
 
+from flask_bcrypt import Bcrypt
+
 from werkzeug.utils import secure_filename
 
 import mysql.connector
 from mysql.connector import Error
 from mysql.connector import errorcode
 
-import os
-
-HOST_URL = "http://localhost:5000/"
+HOST_URL = "http://localhost:5000"
 
 # MySQL connection params
 HOSTNAME='localhost'
@@ -34,7 +34,10 @@ mail = Mail(app)
 app.config['UPLOAD_FOLDER'] = upload_folder = "./upload-folder"
 app.secret_key = os.urandom(24)
 
-current_user = ""
+bcrypt = Bcrypt()
+
+current_user_role = ""
+current_username = ""
 data = []
 
 def get_db_connection():
@@ -51,7 +54,11 @@ def get_db_cursor(db_connection):
 @app.route('/')
 @app.route('/home')
 def index():
-    return render_template('dashboard.html')
+    if current_user_role == 'Admin':
+        global current_username
+        return render_template('dashboard.html', data = get_all_users(), user = (current_username, current_user_role))
+
+    return render_template('dashboard.html', data = get_all_files(), user = (current_username, current_user_role))
 
 
 @app.route('/user/signup', methods=['GET', 'POST'])
@@ -65,8 +72,9 @@ def signup():
         return redirect('/home')
     app.logger.debug(f'path: /user/signup, data received in request: {request.form}')
     
+    pw_hash = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
     query = 'INSERT INTO user (fname, lname, email, username, password, groupnames) values (%s, %s, %s, %s, %s, %s)'
-    data = (request.form['firstname'], request.form['lastname'], request.form['email'], request.form['username'], request.form['password'], request.form['groupnames'])
+    data = (request.form['firstname'], request.form['lastname'], request.form['email'], request.form['username'], pw_hash, request.form['groupnames'])
     execute_query(query, data)
     
     groups = request.form['groupnames'].split()
@@ -119,7 +127,7 @@ def login():
     
     record = None
     try:
-        db_cursor.execute("SELECT password, status from user WHERE username = %s", (request.form["username"],))
+        db_cursor.execute("SELECT password, status, role from user WHERE username = %s", (request.form["username"],))
         record = db_cursor.fetchone()
     except mysql.connector.Error as error:
         print("Failed to insert into MySQL table {}".format(error))
@@ -134,39 +142,32 @@ def login():
         flash('Admin is yet to approve your account')
         return redirect('/home')
 
-    if record[0] != request.form["password"]:
+    if not bcrypt.check_password_hash(record[0], request.form["password"]):
         flash('Invalid password, please try again')
         return redirect('/user/login')
 
     session['logged_in'] = True
 
-    global current_user
-    current_user = request.form["username"]
+    global current_user_role 
+    current_user_role = record[2]
+
+    global current_username
+    current_username = request.form["username"]
     return redirect('/home')
 
 
-@app.route("/admin/getallusers", methods = ['GET'])
-def getallusers():
-    global data
+def get_all_users():
     db_connection = get_db_connection()
     db_cursor = get_db_cursor(db_connection)
     
     records = []
     try:
-        db_cursor.execute("SELECT fname, lname, groupnames FROM user WHERE status = 'Verified';")
+        db_cursor.execute("SELECT fname, lname, username, groupnames FROM user WHERE status = 'Verified';")
         records = db_cursor.fetchall()
     except mysql.connector.Error as error:
         print("Failed to insert into MySQL table {}".format(error))
 
-    if not records:
-        app.logger.debug("path: /admin/getallusers, no users left to authenticate")
-        flash('No users left to authenticate')
-        return render_template('dashboard.html')
-
-    global data
-    data = records
-    app.logger.debug(f'path: /admin/getallusers, user fetched from db: {records}')
-    return redirect('/home')
+    return records
 
 
 @app.route("/admin/approveuser/<username>", methods = ['GET'])
@@ -185,25 +186,47 @@ def logout():
 @app.route('/user/upload', methods = ['POST'])
 def upload_file():
     app.logger.debug(f'path: /user/upload, Files in req dict: {request.files}')
-    mandatory_params = ["username", "groupname"]
+    app.logger.debug(f'path: /user/upload, request args in req dict: {request.args}')
+    mandatory_params = ["username"]
     if not all(param in request.args for param in mandatory_params):
         app.logger.error(f'path: /user/upload, mandatory field(s) missing. args received in request: {request.args}')
-        return render_template('dashboard.html')
+        return redirect('/home')
 
     if "file" not in request.files:
         app.logger.debug('path: /user/upload, No file key in request.files')
-        return render_template('dashboard.html')
+        return redirect('/home')
 
     file = request.files['file']
     file.save(os.path.join(upload_folder, secure_filename(file.filename)))
 
+    db_connection = get_db_connection()
+    db_cursor = get_db_cursor(db_connection)
+    groupnames = None
+    try:
+        db_cursor.execute("SELECT groupnames from user WHERE username = %s", (request.args["username"],))
+        groupnames = db_cursor.fetchone()
+    except mysql.connector.Error as error:
+        print("Failed to insert into MySQL table {}".format(error))
+
     # insert into database
     query = f'INSERT INTO upload (username, filename, groupname) Values (%s, %s, %s)'
-    execute_query(query, (request.args['username'], file.filename, request.args['groupname']))
+    execute_query(query, (request.args['username'], file.filename, groupnames[0]))
 
     app.logger.debug('path: /user/upload, file uploaded successfully')
-    return render_template('dashboard.html')
+    return redirect('/home')
 
+def get_all_files():
+    db_connection = get_db_connection()
+    db_cursor = get_db_cursor(db_connection)
+    
+    file_records = []
+    try:
+        db_cursor.execute("SELECT * from upload;")
+        file_records = db_cursor.fetchall()
+    except mysql.connector.Error as error:
+        print("Failed to get from MySQL table {}".format(error))
+
+    return file_records
 
 @app.errorhandler(404)
 def not_found(some):
