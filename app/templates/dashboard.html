@@ -8,25 +8,56 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <style>
+    .alert-error {
+      padding: 8px;
+      background-color: rgb(50, 72, 196);
+      color: white;
+    }
+
+    hr.style2 {
+      border-top: 3px double #8c8b8b;
+    }
+  </style>
 </head>
 <body>
 <div class="header">
+  <div class="text-alignment heading-font heading-fonyt-size" style="padding-top: 25px;">Dashboard</div>
+  <!-- <div class="form-group"> -->
+    {% for message in get_flashed_messages() %}
+      <div class="alert-error"><b>NOTE:</b> {{ message }}</div>
+    {% endfor %}
+  <!-- </div> -->
+  <div>
   {% if session['logged_in'] %}   
     <a href="/user/logout"<button type="submit" class="btn btn-sm btn-primary header-btn">Logout</button></a>
-  {% else %}
-    <a href="/user/login"<button type="submit" class="btn btn-sm btn-primary header-btn">Login</button></a>
-    <a href="/user/signup"><button type="submit" class="btn btn-sm btn-primary header-btn">Sign Up</button></a>
-  {% endif %}
-      
-    </div>
-      <div class="text-alignment heading-font heading-fonyt-size">Dashboard</div>
+    <button type="button" class="btn btn-sm btn-primary header-btn" data-toggle="modal" data-target="#uploadModal">Upload</button><br/><br/>
+  </div>
+  <hr class="style2"><br>
 <div class="container">
   <!-- Trigger the modal with a button -->
-  <button type="button" class="btn btn-primary btn-md float-element-right" data-toggle="modal" data-target="#uploadModal">Upload</button>
-  {% if data %}
+  {% if user[1] == 'Admin' %}
     {% for record in data %}
-      <div>
-        <p>{{ record }}</p><br/>
+      <div style="float: left; padding-left: 20px; padding-bottom: 5px; width: 100%;">
+        <p><b>Firstname:</b> {{ record[0] }}</p>
+        <p><b>Lastname:</b> {{ record[1] }}</p>
+        <p><b>Username:</b> {{ record[2] }}</p>
+        <p><b>Groups:</b> {{ record[3] }}</p>
+        <a style="float: left; margin-left: 47%;" href="/admin/approveuser/{{record[2]}}"<button type="submit" class="btn btn-sm btn-primary header-btn">Approve</button></a><br/><br/>
+        <hr class="style2"><br>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if user[1] == 'User' %}
+    {% for record in data %}
+      <div style="float: left; padding-left: 20px; padding-bottom: 5px; width: 100%;">
+        <p><b>Filename:</b> {{ record[1] }}</p>
+        <p><b>Upload by:</b> {{ record[0] }}</p>
+        <p><b>Groups:</b> {{ record[2] }}</p>
+        <p><b>Created At:</b> {{ record[3] }}</p>
+        <p><b>Updated At:</b> {{ record[4] }}</p><br/>
+        <hr class="style2"><br>
       </div>
     {% endfor %}
   {% endif %}
@@ -55,13 +86,18 @@
     </div>
   </div>
 </div>
+{% else %}
+    <a href="/user/login"<button type="submit" class="btn btn-sm btn-primary header-btn">Login</button></a>
+    <a href="/user/signup"><button type="submit" class="btn btn-sm btn-primary header-btn">Sign Up</button></a>
+  {% endif %}
+      
   <script type="text/javascript">
     function uploadFile() {
       let file = document.getElementById("image-file").files[0];
       let formData = new FormData();
 
       formData.append("file", file);
-      fetch('/user/upload', {method: "POST", body: formData});
+      fetch('/user/upload?username={{user[0]}}', {method: "POST", body: formData});
     }
   </script>
 </body>
